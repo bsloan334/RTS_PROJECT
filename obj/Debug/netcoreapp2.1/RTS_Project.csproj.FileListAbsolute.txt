@@ -1,0 +1,11 @@
+/Users/zachdillard/Projects/RTS_PROJECT/bin/Debug/netcoreapp2.1/RTS_Project.deps.json
+/Users/zachdillard/Projects/RTS_PROJECT/bin/Debug/netcoreapp2.1/RTS_Project.runtimeconfig.json
+/Users/zachdillard/Projects/RTS_PROJECT/bin/Debug/netcoreapp2.1/RTS_Project.runtimeconfig.dev.json
+/Users/zachdillard/Projects/RTS_PROJECT/bin/Debug/netcoreapp2.1/RTS_Project.dll
+/Users/zachdillard/Projects/RTS_PROJECT/bin/Debug/netcoreapp2.1/RTS_Project.pdb
+/Users/zachdillard/Projects/RTS_PROJECT/obj/Debug/netcoreapp2.1/RTS_Project.csprojAssemblyReference.cache
+/Users/zachdillard/Projects/RTS_PROJECT/obj/Debug/netcoreapp2.1/RTS_Project.csproj.CoreCompileInputs.cache
+/Users/zachdillard/Projects/RTS_PROJECT/obj/Debug/netcoreapp2.1/RTS_Project.AssemblyInfoInputs.cache
+/Users/zachdillard/Projects/RTS_PROJECT/obj/Debug/netcoreapp2.1/RTS_Project.AssemblyInfo.cs
+/Users/zachdillard/Projects/RTS_PROJECT/obj/Debug/netcoreapp2.1/RTS_Project.dll
+/Users/zachdillard/Projects/RTS_PROJECT/obj/Debug/netcoreapp2.1/RTS_Project.pdb
