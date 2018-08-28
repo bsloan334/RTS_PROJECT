@@ -44,10 +44,10 @@ namespace RTS_Project
             xInt = (xInt + 1) % 8;
             currentPositions[0, 1] = (char)xInt;
 
-            char xChar = currentPositions[0, 1];
-            int xInt = Int32.Parse(xChar.ToString());
-            xInt = (xInt + 1) % 8;
-            currentPositions[0, 1] = (char)xInt;
+            char yChar = currentPositions[0, 1];
+            int yInt = Int32.Parse(yChar.ToString());
+            yInt = (yInt + 1) % 8;
+            currentPositions[0, 1] = (char)yInt;
         }
 
         public void UpdateY()
