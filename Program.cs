@@ -32,7 +32,9 @@ namespace RTS_Project
 
         public void UpdateTrack()
         {
-
+            UpdateX();
+            UpdateY();
+            UpdateZ();
         }
 
         public void UpdateX()
