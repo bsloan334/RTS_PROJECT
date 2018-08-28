@@ -9,7 +9,7 @@ namespace RTS_Project
         public char[,] planeY;
         public char[,] planeZ;
 
-        public TrainTrack(ushort row, ushort col)
+        public TrainTrack(int row, int col)
         {
             planeX = new char[row, col];
             planeY = new char[row, col];
@@ -17,7 +17,7 @@ namespace RTS_Project
             ClearTrack(row, col);
         }
 
-        public void ClearTrack(ushort row, ushort col)
+        public void ClearTrack(int row, int col)
         {
             for (int i = 0; i < row; i++)
             {
@@ -30,40 +30,45 @@ namespace RTS_Project
             }
         }
 
-        public void UpdateTrack()
+        public void UpdateTrack(ref char[,] currentPositions)
         {
-            UpdateX();
-            UpdateY();
-            UpdateZ();
+            UpdateX(ref currentPositions);
+            UpdateY(ref currentPositions);
+            UpdateZ(ref currentPositions);
+
+            ClearTrack(8, 7);
+            planeX[currentPositions[0, 2], currentPositions[0, 1]] = 'X'; 
+            planeY[currentPositions[1, 2], currentPositions[1, 1]] = 'Y'; 
+            planeZ[currentPositions[2, 2], currentPositions[2, 1]] = 'Z'; 
         }
 
-        public void UpdateX(char[,] currentPositions)
+        public void UpdateX(ref char[,] currentPositions)
         {
             char xChar = currentPositions[0, 2];
-            int xInt = Int32.Parse(xChar.ToString());
+            int xInt = xChar;
             xInt = (xInt + 1) % 8;
-            currentPositions[0, 2] = (char)xInt;
+            currentPositions[0, 2] = Convert.ToChar(xInt);
 
             char yChar = currentPositions[0, 1];
-            int yInt = Int32.Parse(yChar.ToString());
+            int yInt = yChar;
             yInt = (yInt + 1) % 7;
-            currentPositions[0, 1] = (char)yInt;
+            currentPositions[0, 1] = Convert.ToChar(yInt);
         }
 
-        public void UpdateY()
+        public void UpdateY(ref char[,] currentPositions)
         {
-            char yChar = currentPositions[1, 1];
-            int yInt = Int32.Parse(yChar.ToString());
+            char yChar = currentPositions[1, 2];
+            int yInt = yChar;
             yInt = (yInt + 1) % 8;
-            currentPositions[1, 1] = (char)yInt;
+            currentPositions[1, 2] = Convert.ToChar(yInt);
         }
 
-        public void UpdateZ()
+        public void UpdateZ(ref char[,] currentPositions)
         {
-            char xChar = currentPositions[2, 2];
-            int xInt = Int32.Parse(xChar.ToString());
+            char xChar = currentPositions[2, 1];
+            int xInt = xChar;
             xInt = (xInt + 1) % 7;
-            currentPositions[2, 2] = (char)xInt;
+            currentPositions[2, 1] = Convert.ToChar(xInt);
         }
     }
 
@@ -72,50 +77,31 @@ namespace RTS_Project
         public static System.Object lockA = new System.Object();
         public static System.Object lockB = new System.Object();
 
-        public static int[] bufferA = new int[10];
-        public static int[] bufferB = new int[10];
+        public static TrainTrack track = new TrainTrack(8, 7);
 
         public static char[,] currentPositions = new char[3, 3];
 
-        public static int iA = 1;
-        public static int iB = 1;
-
         static void Main(string[] args)
         {
-            Thread sender = new Thread(Producer);
-            Thread receiver = new Thread(Consumer);
 
-            TrainTrack track = new TrainTrack(8, 7);
-            RunTrains(track);
+            InitTrains();
+
+            for(int i = 0; i < 10; i++) 
+            {
+                PrintAllTracks();
+                track.UpdateTrack(ref currentPositions);
+                Thread.Sleep(1000);
+            }
 
             //sender.Start();
             //receiver.Start();
         }
 
-        static void RunTrains(TrainTrack buffer, char[,] positions)
+        static void InitTrains()
         {
-            buffer.planeX[0, 0] = 'X';
-            buffer.planeY[0, 2] = 'Y';
-            buffer.planeZ[3, 6] = 'Z';
-
-            PrintTrack(buffer.planeX);
-            PrintTrack(buffer.planeY);
-            PrintTrack(buffer.planeZ);
-        }
-
-        static void InitTrains(char[,] positions)
-        {
-            positions[0, 0] = 'X';
-            positions[0, 1] = '0';
-            positions[0, 2] = '0';
-
-            positions[1, 0] = 'Y';
-            positions[1, 1] = '0';
-            positions[1, 2] = '2';
-
-            positions[2, 0] = 'Z';
-            positions[2, 1] = '3';
-            positions[2, 2] = '6';
+            track.planeX[0, 0] = 'X'; 
+            track.planeY[0, 2] = 'Y'; 
+            track.planeZ[3, 6] = 'Z'; 
         }
 
         static void PrintTrack(char[,] track)
@@ -131,95 +117,11 @@ namespace RTS_Project
             Console.WriteLine();
         }
 
-        static void Producer()
+        static void PrintAllTracks()
         {
-            while (iA <= 50 && iB <= 50)
-            {
-                lock (lockA)
-                {
-                    if ((iA % 10) == 0)
-                    {
-                        bufferA[9] = iA;
-                        Console.WriteLine("write to Buffer A " + bufferA[9]);
-                    }
-                    else
-                    {
-                        bufferA[(iA % 10) - 1] = iA;
-                        Console.WriteLine("write to Buffer A " + bufferA[(iA % 10) - 1]);
-                    }
-                    iA++;
-                    Thread.Sleep(1000);
-                }
-                lock (lockB)
-                {
-                    if ((iB % 10) == 0)
-                    {
-                        bufferB[9] = iB;
-                        Console.WriteLine("write to Buffer B " + bufferB[9]);
-                    }
-                    else
-                    {
-                        bufferB[(iB % 10) - 1] = iB;
-                        Console.WriteLine("write to Buffer B " + bufferB[(iB % 10) - 1]);
-                    }
-                    iB++;
-                    Thread.Sleep(1000);
-                }
-            }
-        }
-
-        static void Consumer()
-        {
-            while(iA <= 50 && iB <= 50)
-            {
-                lock (lockA)
-                {
-                    if (IsBufferFull(bufferA) == true)
-                    {
-                        Console.Write("Buffer A: ");
-                        foreach (int i in bufferA)
-                        {
-                            Console.Write(bufferA[i] + " ");
-                            Thread.Sleep(1000);
-                        }
-                        Console.WriteLine();
-                        ClearBuffer(bufferA);
-                    }
-
-                    lock (lockB)
-                    {
-                        if (IsBufferFull(bufferB) == true)
-                        {
-                            Console.Write("Buffer B: ");
-                            foreach (int i in bufferB)
-                            {
-                                Console.Write(bufferB[i] + " ");
-                                Thread.Sleep(1000);
-                            }
-                            Console.WriteLine();
-                            ClearBuffer(bufferB);
-                        }
-                    }
-                }
-            }
-        }
-
-        static bool IsBufferFull(int[] buffer)
-        {
-            foreach (int i in buffer)
-            {
-                if (buffer[i] == 0)
-                    return false;
-            }
-            return true;
-        }
-
-        static void ClearBuffer(int[] buffer)
-        {
-            foreach (int i in buffer) 
-            {
-                buffer[i] = 0;
-            }
+            PrintTrack(track.planeX);
+            PrintTrack(track.planeY);
+            PrintTrack(track.planeZ);
         }
     }
 }

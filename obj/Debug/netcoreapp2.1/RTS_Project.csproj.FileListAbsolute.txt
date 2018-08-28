@@ -9,3 +9,14 @@
 /Users/zachdillard/Projects/RTS_PROJECT/obj/Debug/netcoreapp2.1/RTS_Project.AssemblyInfo.cs
 /Users/zachdillard/Projects/RTS_PROJECT/obj/Debug/netcoreapp2.1/RTS_Project.dll
 /Users/zachdillard/Projects/RTS_PROJECT/obj/Debug/netcoreapp2.1/RTS_Project.pdb
+/Users/bertsloan/Desktop/RTS_Project/obj/Debug/netcoreapp2.1/RTS_Project.csprojAssemblyReference.cache
+/Users/bertsloan/Desktop/RTS_Project/obj/Debug/netcoreapp2.1/RTS_Project.csproj.CoreCompileInputs.cache
+/Users/bertsloan/Desktop/RTS_Project/obj/Debug/netcoreapp2.1/RTS_Project.AssemblyInfoInputs.cache
+/Users/bertsloan/Desktop/RTS_Project/obj/Debug/netcoreapp2.1/RTS_Project.AssemblyInfo.cs
+/Users/bertsloan/Desktop/RTS_Project/obj/Debug/netcoreapp2.1/RTS_Project.dll
+/Users/bertsloan/Desktop/RTS_Project/obj/Debug/netcoreapp2.1/RTS_Project.pdb
+/Users/bertsloan/Desktop/RTS_Project/bin/Debug/netcoreapp2.1/RTS_Project.deps.json
+/Users/bertsloan/Desktop/RTS_Project/bin/Debug/netcoreapp2.1/RTS_Project.runtimeconfig.json
+/Users/bertsloan/Desktop/RTS_Project/bin/Debug/netcoreapp2.1/RTS_Project.runtimeconfig.dev.json
+/Users/bertsloan/Desktop/RTS_Project/bin/Debug/netcoreapp2.1/RTS_Project.dll
+/Users/bertsloan/Desktop/RTS_Project/bin/Debug/netcoreapp2.1/RTS_Project.pdb
