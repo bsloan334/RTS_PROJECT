@@ -52,12 +52,18 @@ namespace RTS_Project
 
         public void UpdateY()
         {
-
+            char yChar = currentPositions[1, 1];
+            int yInt = Int32.Parse(yChar.ToString());
+            yInt = (yInt + 1) % 8;
+            currentPositions[1, 1] = (char)yInt;
         }
 
         public void UpdateZ()
         {
-
+            char xChar = currentPositions[2, 2];
+            int xInt = Int32.Parse(xChar.ToString());
+            xInt = (xInt + 1) % 7;
+            currentPositions[2, 2] = (char)xInt;
         }
     }
 
