@@ -37,9 +37,17 @@ namespace RTS_Project
             UpdateZ();
         }
 
-        public void UpdateX()
+        public void UpdateX(char[,] currentPositions)
         {
+            char xChar = currentPositions[0, 1];
+            int xInt = Int32.Parse(xChar.ToString());
+            xInt = (xInt + 1) % 8;
+            currentPositions[0, 1] = (char)xInt;
 
+            char xChar = currentPositions[0, 1];
+            int xInt = Int32.Parse(xChar.ToString());
+            xInt = (xInt + 1) % 8;
+            currentPositions[0, 1] = (char)xInt;
         }
 
         public void UpdateY()
@@ -61,6 +69,8 @@ namespace RTS_Project
         public static int[] bufferA = new int[10];
         public static int[] bufferB = new int[10];
 
+        public static char[,] currentPositions = new char[3, 3];
+
         public static int iA = 1;
         public static int iB = 1;
 
@@ -76,7 +86,7 @@ namespace RTS_Project
             //receiver.Start();
         }
 
-        static void RunTrains(TrainTrack buffer)
+        static void RunTrains(TrainTrack buffer, char[,] positions)
         {
             buffer.planeX[0, 0] = 'X';
             buffer.planeY[0, 2] = 'Y';
@@ -85,6 +95,21 @@ namespace RTS_Project
             PrintTrack(buffer.planeX);
             PrintTrack(buffer.planeY);
             PrintTrack(buffer.planeZ);
+        }
+
+        static void InitTrains(char[,] positions)
+        {
+            positions[0, 0] = 'X';
+            positions[0, 1] = '0';
+            positions[0, 2] = '0';
+
+            positions[1, 0] = 'Y';
+            positions[1, 1] = '0';
+            positions[1, 2] = '2';
+
+            positions[2, 0] = 'Z';
+            positions[2, 1] = '3';
+            positions[2, 2] = '6';
         }
 
         static void PrintTrack(char[,] track)
