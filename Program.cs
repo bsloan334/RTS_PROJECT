@@ -39,14 +39,14 @@ namespace RTS_Project
 
         public void UpdateX(char[,] currentPositions)
         {
-            char xChar = currentPositions[0, 1];
+            char xChar = currentPositions[0, 2];
             int xInt = Int32.Parse(xChar.ToString());
             xInt = (xInt + 1) % 8;
-            currentPositions[0, 1] = (char)xInt;
+            currentPositions[0, 2] = (char)xInt;
 
             char yChar = currentPositions[0, 1];
             int yInt = Int32.Parse(yChar.ToString());
-            yInt = (yInt + 1) % 8;
+            yInt = (yInt + 1) % 7;
             currentPositions[0, 1] = (char)yInt;
         }
 
