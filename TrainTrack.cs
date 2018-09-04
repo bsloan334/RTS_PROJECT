@@ -1,43 +1,96 @@
+using System.Collections.Generic;
+using System.Threading;
+using System;
+
 namespace RTS_PROJECT
 {
-    class TrainTrack
+    public class Plain
     {
-        private int m_Row;
-        private int m_Col;
-        public char[,] planeX;
-        public char[,] planeY;
-        public char[,] planeZ;
+        private int mNumCols, mNumRows;
+        private char[,] mPlain;
 
-        public TrainTrack(int row, int col)
+        public Plain(int row, int col)
         {
-            planeX = new char[row, col];
-            planeY = new char[row, col];
-            planeZ = new char[row, col];
-            m_Row = row;
-            m_Col = col;
-            ClearTrack();
+            mNumRows = row;
+            mNumCols = col;
+            mPlain = new char[row, col];
         }
 
-        public void ClearTrack()
+        public void ClearPlain()
         {
-            for (int i = 0; i < m_Row; i++)
+            for (int i = 0; i < mNumRows; i++)
             {
-                for (int j = 0; j < m_Col; j++)
+                for (int j = 0; j < mNumCols; j++)
                 {
-                    planeX[i, j] = '.';
-                    planeY[i, j] = '.';
-                    planeZ[i, j] = '.';
+                    mPlain[i, j] = '.';
                 }
             }
         }
-        public char IntToChar(int i)
+
+        public void UpdatePlain(char trian, int row, int col)
         {
-            return (char)(i + 48);
+            mPlain[row, col] = trian;
         }
 
-        public int CharToInt(char c)
+        public void PrintPlain()
         {
-            return c - '0';
+            for(int i = 0; i < mNumRows; i++)
+            {
+                for(int j = 0; j < mNumCols; j++)
+                {
+                    Console.Write(mPlain[i, j]);
+                }
+                Console.WriteLine();
+            }
+            Console.WriteLine();
+        }
+        
+        public Coordinate FindTrain(char train)
+        {
+            Coordinate coordinate = new Coordinate();
+            for (int i = 0; i < mNumRows; i++)
+            {
+                for (int j = 0; j < mNumCols; j++)
+                {
+                    if (mPlain[i, j] == train)
+                        coordinate.UpdateCoordinate(i, j);
+                }
+            }
+            return coordinate;
+        }
+    }
+
+    //The TrainTrack class is used for our A and B buffers
+    //Each track as a plain for each train to run on that is a 
+    //dictionary that holds the train letter as the key and
+    //the 8x7 plain in which it will move
+    class TrainTrack
+    {
+        ReaderWriterLockSlim mLock = new ReaderWriterLockSlim();
+        Dictionary<char, Plain> mPlains;
+
+        public TrainTrack(int row, int col)
+        {
+            mPlains = new Dictionary<char, Plain>();
+            mPlains.Add('X', new Plain(row, col));
+            mPlains.Add('Y', new Plain(row, col));
+            mPlains.Add('Z', new Plain(row, col));
+            foreach(Plain plain in mPlains.Values)
+            {
+                plain.ClearPlain();
+            }
+        }
+
+        public void PrintTracks()
+        {
+            foreach (Plain plain in mPlains.Values)
+                plain.PrintPlain();
+        }
+
+        public void UpdatePlain(char train, int row, int col)
+        {
+            mPlains[train].ClearPlain();
+            mPlains[train].UpdatePlain(train, row, col);
         }
 
         public int IncrementRow(int row)
@@ -50,42 +103,77 @@ namespace RTS_PROJECT
             return (col + 1) % 7;
         }
 
-        public void UpdateTrack(ref char[,] currentPositions)
+        public void UpdateTrack(Positions positions)
         {
-            UpdateX(ref currentPositions);
-            UpdateY(ref currentPositions);
-            UpdateZ(ref currentPositions);
-
-            ClearTrack();
-
-            planeX[CharToInt(currentPositions[0, 1]), CharToInt(currentPositions[0, 2])] = 'X';
-            planeY[CharToInt(currentPositions[1, 1]), CharToInt(currentPositions[1, 2])] = 'Y';
-            planeZ[CharToInt(currentPositions[2, 1]), CharToInt(currentPositions[2, 2])] = 'Z';
+            mLock.EnterWriteLock();
+            try
+            {
+                Dictionary<char, Coordinate> coordinates = positions.GetPositions();
+                UpdateX(coordinates['X']);
+                UpdateY(coordinates['Y']);
+                UpdateZ(coordinates['Z']);
+            }
+            finally
+            {
+                mLock.ExitWriteLock();
+            }
         }
 
-        public void UpdateX(ref char[,] currentPositions)
+        public void SetTrack(Positions positions)
         {
-            char rowChar = currentPositions[0, 1];
-            int rowInt = IncrementRow(CharToInt(rowChar));
-            currentPositions[0, 1] = IntToChar(rowInt);
-
-            char colChar = currentPositions[0, 2];
-            int colInt = IncrementCol(CharToInt(colChar));
-            currentPositions[0, 2] = IntToChar(colInt);
+            Dictionary<char, Coordinate> coordinates = positions.GetPositions();
+            mLock.EnterWriteLock();
+            try
+            {
+                UpdatePlain('X', coordinates['X'].GetRow(), coordinates['X'].GetCol());
+                UpdatePlain('Y', coordinates['Y'].GetRow(), coordinates['Y'].GetCol());
+                UpdatePlain('Z', coordinates['Z'].GetRow(), coordinates['Z'].GetCol());
+            }
+            finally
+            {
+                mLock.ExitWriteLock();
+            }
         }
 
-        public void UpdateY(ref char[,] currentPositions)
+        public Dictionary<char, Plain> ReadTrack()
         {
-            char rowChar = currentPositions[1, 1];
-            int rowInt = IncrementRow(CharToInt(rowChar));
-            currentPositions[1, 1] = IntToChar(rowInt);
+            mLock.EnterReadLock();
+            try
+            {
+                return mPlains;
+            }
+            finally
+            {
+                mLock.ExitReadLock();
+            }
         }
 
-        public void UpdateZ(ref char[,] currentPositions)
+        public void UpdateX(Coordinate coordinate)
         {
-            char colChar = currentPositions[2, 2];
-            int colInt = IncrementCol(CharToInt(colChar));
-            currentPositions[2, 2] = IntToChar(colInt);
+            int row = coordinate.GetRow();
+            int col = coordinate.GetCol();
+
+            row = IncrementRow(row);
+            col = IncrementCol(col);
+            UpdatePlain('X', row, col);
+        }
+
+        public void UpdateY(Coordinate coordinate)
+        {
+            int row = coordinate.GetRow();
+            int col = coordinate.GetCol();
+
+            row = IncrementRow(row);
+            UpdatePlain('Y', row, col);
+        }
+
+        public void UpdateZ(Coordinate coordinate)
+        {
+            int row = coordinate.GetRow();
+            int col = coordinate.GetCol();
+
+            col = IncrementCol(col);
+            UpdatePlain('Z', row, col);
         }
     }
 }
