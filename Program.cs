@@ -13,6 +13,14 @@ namespace RTS_PROJECT
         public const int SLEEP = 1000;
         public static int TIME = 0;
 
+        public static bool p2Ran = false;
+        public static Dictionary<char, bool> whoToStop = new Dictionary<char, bool>
+        {
+            {'X', false},
+            {'Y', false},
+            {'Z', false}
+        };
+
         //TrainTrack is class that encapsulates the grids
         public static TrainTrack bufferA = new TrainTrack(ROW, COL);
         public static TrainTrack bufferB = new TrainTrack(ROW, COL);
@@ -112,9 +120,18 @@ namespace RTS_PROJECT
                     Coordinate coordinateX = plains['X'].FindTrain('X');
                     Coordinate coordinateY = plains['Y'].FindTrain('Y');
                     Coordinate coordinateZ = plains['Z'].FindTrain('Z');
-                    bufferC.UpdatePosition('X', coordinateX.GetRow(), coordinateX.GetCol());
-                    bufferC.UpdatePosition('Y', coordinateY.GetRow(), coordinateY.GetCol());
-                    bufferC.UpdatePosition('Z', coordinateZ.GetRow(), coordinateZ.GetCol());
+
+                    if (whoToStop['X'] == false)
+                        bufferC.UpdatePosition('X', coordinateX.GetRow(), coordinateX.GetCol());
+                    if (whoToStop['Y'] == false)
+                        bufferC.UpdatePosition('Y', coordinateY.GetRow(), coordinateY.GetCol());
+                    if (whoToStop['Z'] == false)
+                        bufferC.UpdatePosition('Z', coordinateZ.GetRow(), coordinateZ.GetCol());
+
+                    whoToStop['X'] = false;
+                    whoToStop['Y'] = false;
+                    whoToStop['Z'] = false;
+
                 }
             }
             else if (TIME % 2 == 1)
@@ -122,21 +139,47 @@ namespace RTS_PROJECT
                 lock (lockD)
                 {
                     Dictionary<char, Plain> plains = bufferB.ReadTrack();
-                    Coordinate coordinateX = plains['X'].FindTrain('X');
                     Coordinate coordinateY = plains['Y'].FindTrain('Y');
                     Coordinate coordinateZ = plains['Z'].FindTrain('Z');
-                    bufferD.UpdatePosition('X', coordinateX.GetRow(), coordinateX.GetCol());
-                    bufferD.UpdatePosition('Y', coordinateY.GetRow(), coordinateY.GetCol());
-                    bufferD.UpdatePosition('Z', coordinateZ.GetRow(), coordinateZ.GetCol());
+
+                    if (whoToStop['X'] == false)
+                    {
+                        Coordinate coordinateX = plains['X'].FindTrain('X');
+                        bufferD.UpdatePosition('X', coordinateX.GetRow(), coordinateX.GetCol());
+                    }
+                    if (whoToStop['Y'] == false)
+                        bufferD.UpdatePosition('Y', coordinateY.GetRow(), coordinateY.GetCol());
+                    if (whoToStop['Z'] == false)
+                        bufferD.UpdatePosition('Z', coordinateZ.GetRow(), coordinateZ.GetCol());
+
+                    whoToStop['X'] = false;
+                    whoToStop['Y'] = false;
+                    whoToStop['Z'] = false;
                 }
             }
+            p2Ran = true;
+        }
+
+        static public int IncrementRow(int row)
+        {
+            return (row + 1) % 8;
+        }
+
+        static public int IncrementCol(int col)
+        {
+            return (col + 1) % 7;
         }
 
         static void P3(object state)
         {
             //We add 1 to the time output for P3 because TIME doesn't increment
             //until after all threads have ran in the current cycle
-            if(TIME % 2 == 0)
+
+            //We began to have synchronization issues where P3 might run first 
+            //before P2 is able to update bufferC so we created a lock to ensure
+            //P3 will always run after P2
+            while (p2Ran == false) { }
+            if (TIME % 2 == 0)
             {
                 lock(lockC)
                 {
@@ -160,6 +203,32 @@ namespace RTS_PROJECT
                     else
                     {
                         Console.WriteLine("There was no collision at time " + (TIME + 1));
+                    }
+
+                    Coordinate futureX = positions['X'];
+                    int fxRow = IncrementRow(futureX.GetRow());
+                    int fxCol = IncrementCol(futureX.GetCol());
+
+                    Coordinate futureY = positions['Y'];
+                    int fyRow = IncrementRow(futureY.GetRow());
+                    int fyCol = futureY.GetCol();
+
+                    Coordinate futureZ = positions['Z'];
+                    int fzRow = futureZ.GetRow();
+                    int fzCol = IncrementCol(futureZ.GetCol());
+
+
+                    if (fxRow == fyRow && fxCol == fyCol)
+                    {
+                        whoToStop['Y'] = true;
+                    }
+                    if (fxRow == fzRow && fxCol == fzCol)
+                    {
+                        whoToStop['Z'] = true;
+                    }
+                    if (fyRow == fzRow && fyCol == fzCol)
+                    {
+                        whoToStop['Y'] = true;
                     }
                 }
             }
@@ -188,9 +257,36 @@ namespace RTS_PROJECT
                     {
                         Console.WriteLine("There was no collision at time " + (TIME + 1));
                     }
+
+                    Coordinate futureX = positions['X'];
+                    int fxRow = IncrementRow(futureX.GetRow());
+                    int fxCol = IncrementCol(futureX.GetCol());
+
+                    Coordinate futureY = positions['Y'];
+                    int fyRow = IncrementRow(futureY.GetRow());
+                    int fyCol = futureY.GetCol();
+
+                    Coordinate futureZ = positions['Z'];
+                    int fzRow = futureZ.GetRow();
+                    int fzCol = IncrementCol(futureZ.GetCol());
+
+                    if (fxRow == fyRow && fxCol == fyCol)
+                    {
+                        whoToStop['Y'] = true;
+                    }
+                    if (fxRow == fzRow && fxCol == fzCol)
+                    {
+                        whoToStop['Z'] = true;
+                    }
+                    if (fyRow == fzRow && fyCol == fzCol)
+                    {
+                        whoToStop['Y'] = true;
+                    }
                 }
 
             }
+
+            p2Ran = false;
         }
     }
 
