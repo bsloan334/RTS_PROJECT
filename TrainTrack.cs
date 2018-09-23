@@ -4,6 +4,7 @@ using System;
 
 namespace RTS_PROJECT
 {
+    //Class created by Zach and Bert
     public class Plain
     {
         private int mNumCols, mNumRows;
@@ -16,6 +17,7 @@ namespace RTS_PROJECT
             mPlain = new char[row, col];
         }
 
+        //Written by Zach
         public void ClearPlain()
         {
             for (int i = 0; i < mNumRows; i++)
@@ -27,11 +29,13 @@ namespace RTS_PROJECT
             }
         }
 
+        //Written by Bert
         public void UpdatePlain(char trian, int row, int col)
         {
             mPlain[row, col] = trian;
         }
 
+        //Written by Bert
         public void PrintPlain()
         {
             for(int i = 0; i < mNumRows; i++)
@@ -44,7 +48,8 @@ namespace RTS_PROJECT
             }
             Console.WriteLine();
         }
-        
+
+        //Written by Zach
         public Coordinate FindTrain(char train)
         {
             Coordinate coordinate = new Coordinate();
@@ -64,6 +69,7 @@ namespace RTS_PROJECT
     //Each track as a plain for each train to run on that is a 
     //dictionary that holds the train letter as the key and
     //the 8x7 plain in which it will move
+    //Class created by Zach and Bert
     class TrainTrack
     {
         ReaderWriterLockSlim mLock = new ReaderWriterLockSlim();
@@ -81,26 +87,68 @@ namespace RTS_PROJECT
             }
         }
 
+        //Written by Zach
         public void PrintTracks()
         {
             foreach (Plain plain in mPlains.Values)
                 plain.PrintPlain();
         }
 
+        //Written by Zach
         public void UpdatePlain(char train, int row, int col)
         {
             mPlains[train].ClearPlain();
             mPlains[train].UpdatePlain(train, row, col);
         }
 
+        //Written by Bert
         public int IncrementRow(int row)
         {
             return (row + 1) % 8;
         }
 
+        //Written by Bert
         public int IncrementCol(int col)
         {
             return (col + 1) % 7;
+        }
+
+        public void UpdateTrack(Positions positions, char stoppedTrain1, char stoppedTrain2)
+        {
+            mLock.EnterWriteLock();
+            try
+            {
+                Dictionary<char, Coordinate> coordinates = positions.GetPositions();
+                if (stoppedTrain1 != 'X' && stoppedTrain2 != 'X')
+                    UpdateX(coordinates['X']);
+                else if (stoppedTrain1 != 'Y' && stoppedTrain2 != 'Y')
+                    UpdateY(coordinates['Y']);
+                else if (stoppedTrain1 != 'Z' && stoppedTrain2 != 'Z')
+                    UpdateZ(coordinates['Z']);
+            }
+            finally
+            {
+                mLock.ExitWriteLock();
+            }
+        }
+
+        public void UpdateTrack(Positions positions, char stoppedTrain)
+        {
+            mLock.EnterWriteLock();
+            try
+            {
+                Dictionary<char, Coordinate> coordinates = positions.GetPositions();
+                if (stoppedTrain != 'X')
+                    UpdateX(coordinates['X']);
+                else if (stoppedTrain != 'Y')
+                    UpdateY(coordinates['Y']);
+                else if (stoppedTrain != 'Z')
+                    UpdateZ(coordinates['Z']);
+            }
+            finally
+            {
+                mLock.ExitWriteLock();
+            }
         }
 
         public void UpdateTrack(Positions positions)
@@ -119,6 +167,7 @@ namespace RTS_PROJECT
             }
         }
 
+        //Written by Zach
         public void SetTrack(Positions positions)
         {
             Dictionary<char, Coordinate> coordinates = positions.GetPositions();
@@ -135,6 +184,7 @@ namespace RTS_PROJECT
             }
         }
 
+        //Written by Zach
         public Dictionary<char, Plain> ReadTrack()
         {
             mLock.EnterReadLock();
@@ -148,6 +198,7 @@ namespace RTS_PROJECT
             }
         }
 
+        //Written by Bert
         public void UpdateX(Coordinate coordinate)
         {
             int row = coordinate.GetRow();
@@ -158,6 +209,7 @@ namespace RTS_PROJECT
             UpdatePlain('X', row, col);
         }
 
+        //Written by Bert
         public void UpdateY(Coordinate coordinate)
         {
             int row = coordinate.GetRow();
@@ -167,6 +219,7 @@ namespace RTS_PROJECT
             UpdatePlain('Y', row, col);
         }
 
+        //Written by Bert
         public void UpdateZ(Coordinate coordinate)
         {
             int row = coordinate.GetRow();
