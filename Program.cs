@@ -13,7 +13,13 @@ namespace RTS_PROJECT
         public const int SLEEP = 1000;
         public static int TIME = 0;
 
-        public static bool p2Ran = false;
+        //Variables for the Central Command Center (P3)
+        public static Dictionary<int, bool> threadsRan = new Dictionary<int, bool>
+        {
+            {1, false},
+            {2, false},
+            {3, false}
+        };
         public static Dictionary<char, bool> whoToStop = new Dictionary<char, bool>
         {
             {'X', false},
@@ -21,7 +27,7 @@ namespace RTS_PROJECT
             {'Z', false}
         };
 
-        //TrainTrack is class that encapsulates the grids
+        //TrainTrack is a class that encapsulates the grids
         public static TrainTrack bufferA = new TrainTrack(ROW, COL);
         public static TrainTrack bufferB = new TrainTrack(ROW, COL);
 
@@ -29,13 +35,13 @@ namespace RTS_PROJECT
         public static Positions bufferC = new Positions();
         public static Positions bufferD = new Positions();
 
-        //the locks to for the threads to access the buffers
+        //the locks for the threads to access the buffers
         public static Object lockA = new object();
         public static Object lockB = new object();
         public static Object lockC = new object();
         public static Object lockD = new object();
 
-
+        //Written by Zach and Bert
         static void Main(string[] args)
         {
             //Set the initial coordinates of the trains
@@ -47,18 +53,52 @@ namespace RTS_PROJECT
 
             while(TIME != CYCLES)
             {
-                //Start the threads and able to to run multiple times
+                //Start the threads
                 ThreadPool.QueueUserWorkItem(P1);
                 ThreadPool.QueueUserWorkItem(P2);
                 ThreadPool.QueueUserWorkItem(P3);
                 
                 //So the program happens in 1 second intervals
+                while(WaitForThreads() == false) {}
                 Thread.Sleep(1000);
+                lock(threadsRan)
+                {
+                    threadsRan[1] = false;
+                    threadsRan[2] = false;
+                    threadsRan[3] = false;
+                }
                 TIME++;
             }
             Console.ReadLine();
         }
 
+        //Written by Bert
+        static public int IncrementRow(int row)
+        {
+            return (row + 1) % 8;
+        }
+
+        //Written by Bert
+        static public int IncrementCol(int col)
+        {
+            return (col + 1) % 7;
+        }
+
+        //Written by Zach
+        static public bool WaitForThreads()
+        {
+            lock(threadsRan)
+            {
+                foreach (var thread in threadsRan.Values)
+                {
+                    if (thread == false)
+                        return false;
+                }
+                return true;
+            }
+        }
+
+        //Written by Zach
         static void P1(object state)
         {
             //Only occurs for even seconds
@@ -108,8 +148,13 @@ namespace RTS_PROJECT
                     }
                 }
             }
+            lock(threadsRan)
+            {
+                threadsRan[1] = true;
+            }
         }
 
+        //Written by Bert
         static void P2(object state)
         {
             if (TIME % 2 == 0)
@@ -139,14 +184,12 @@ namespace RTS_PROJECT
                 lock (lockD)
                 {
                     Dictionary<char, Plain> plains = bufferB.ReadTrack();
+                    Coordinate coordinateX = plains['X'].FindTrain('X');
                     Coordinate coordinateY = plains['Y'].FindTrain('Y');
                     Coordinate coordinateZ = plains['Z'].FindTrain('Z');
 
                     if (whoToStop['X'] == false)
-                    {
-                        Coordinate coordinateX = plains['X'].FindTrain('X');
                         bufferD.UpdatePosition('X', coordinateX.GetRow(), coordinateX.GetCol());
-                    }
                     if (whoToStop['Y'] == false)
                         bufferD.UpdatePosition('Y', coordinateY.GetRow(), coordinateY.GetCol());
                     if (whoToStop['Z'] == false)
@@ -157,17 +200,10 @@ namespace RTS_PROJECT
                     whoToStop['Z'] = false;
                 }
             }
-            p2Ran = true;
-        }
-
-        static public int IncrementRow(int row)
-        {
-            return (row + 1) % 8;
-        }
-
-        static public int IncrementCol(int col)
-        {
-            return (col + 1) % 7;
+            lock(threadsRan)
+            {
+                threadsRan[2] = true;
+            }
         }
 
         static void P3(object state)
@@ -178,11 +214,12 @@ namespace RTS_PROJECT
             //We began to have synchronization issues where P3 might run first 
             //before P2 is able to update bufferC so we created a lock to ensure
             //P3 will always run after P2
-            while (p2Ran == false) { }
+            while ((threadsRan[1] == false) && (threadsRan[2] == false)) { }
             if (TIME % 2 == 0)
             {
                 lock(lockC)
                 {
+                    //Written by Bert
                     Dictionary<char, Coordinate> positions = bufferC.GetPositions();
                     Coordinate coordX = positions['X'];
                     Coordinate coordY = positions['Y'];
@@ -205,30 +242,66 @@ namespace RTS_PROJECT
                         Console.WriteLine("There was no collision at time " + (TIME + 1));
                     }
 
-                    Coordinate futureX = positions['X'];
-                    int fxRow = IncrementRow(futureX.GetRow());
-                    int fxCol = IncrementCol(futureX.GetCol());
-
-                    Coordinate futureY = positions['Y'];
-                    int fyRow = IncrementRow(futureY.GetRow());
-                    int fyCol = futureY.GetCol();
-
-                    Coordinate futureZ = positions['Z'];
-                    int fzRow = futureZ.GetRow();
-                    int fzCol = IncrementCol(futureZ.GetCol());
-
-
-                    if (fxRow == fyRow && fxCol == fyCol)
+                    //Written by Zach
+                    lock(lockB)
                     {
-                        whoToStop['Y'] = true;
-                    }
-                    if (fxRow == fzRow && fxCol == fzCol)
-                    {
-                        whoToStop['Z'] = true;
-                    }
-                    if (fyRow == fzRow && fyCol == fzCol)
-                    {
-                        whoToStop['Y'] = true;
+                        //Get the positions of the train at TIME + 1
+                        Dictionary<char, Plain> plains = bufferB.ReadTrack();
+                        Coordinate coordinateX = plains['X'].FindTrain('X');
+                        Coordinate coordinateY = plains['Y'].FindTrain('Y');
+                        Coordinate coordinateZ = plains['Z'].FindTrain('Z');
+
+                        if (coordinateX.Equals(coordinateY))
+                        {
+                            Console.WriteLine("Prevented a collsion between X and Y at " + coordinateX + " at time " + (TIME + 1));
+                            lock (lockA)
+                            {
+                                Dictionary<char, Plain> stoppedPlains = bufferA.ReadTrack();
+                                Coordinate stoppedCoordinateX = stoppedPlains['X'].FindTrain('X');
+                                Coordinate stoppedCoordinateY = stoppedPlains['Y'].FindTrain('Y');
+                                Coordinate stoppedCoordinateZ = stoppedPlains['Z'].FindTrain('Z');
+                                Positions stoppedPositions = new Positions();
+                                stoppedPositions.UpdatePosition('X', coordinateX.GetRow(), coordinateX.GetCol());
+                                stoppedPositions.UpdatePosition('Y', coordinateY.GetRow(), coordinateY.GetCol());
+                                stoppedPositions.UpdatePosition('Z', coordinateZ.GetRow(), coordinateZ.GetCol());
+
+                                bufferB.UpdateTrack(stoppedPositions, 'Y');
+                            }
+                        }
+                        if (coordinateX.Equals(coordinateZ))
+                        {
+                            Console.WriteLine("Prevented a collsion between X and Z at " + coordinateX + " at time " + (TIME + 1));
+                            lock (lockA)
+                            {
+                                Dictionary<char, Plain> stoppedPlains = bufferA.ReadTrack();
+                                Coordinate stoppedCoordinateX = stoppedPlains['X'].FindTrain('X');
+                                Coordinate stoppedCoordinateY = stoppedPlains['Y'].FindTrain('Y');
+                                Coordinate stoppedCoordinateZ = stoppedPlains['Z'].FindTrain('Z');
+                                Positions stoppedPositions = new Positions();
+                                stoppedPositions.UpdatePosition('X', coordinateX.GetRow(), coordinateX.GetCol());
+                                stoppedPositions.UpdatePosition('Y', coordinateY.GetRow(), coordinateY.GetCol());
+                                stoppedPositions.UpdatePosition('Z', coordinateZ.GetRow(), coordinateZ.GetCol());
+
+                                bufferB.UpdateTrack(stoppedPositions, 'Z');
+                            }
+                        }
+                        if (coordinateY.Equals(coordinateZ))
+                        {
+                            Console.WriteLine("Prevented a collsion between Y and Z at " + coordinateZ + " at time " + (TIME + 1));
+                            lock (lockA)
+                            {
+                                Dictionary<char, Plain> stoppedPlains = bufferA.ReadTrack();
+                                Coordinate stoppedCoordinateX = stoppedPlains['X'].FindTrain('X');
+                                Coordinate stoppedCoordinateY = stoppedPlains['Y'].FindTrain('Y');
+                                Coordinate stoppedCoordinateZ = stoppedPlains['Z'].FindTrain('Z');
+                                Positions stoppedPositions = new Positions();
+                                stoppedPositions.UpdatePosition('X', coordinateX.GetRow(), coordinateX.GetCol());
+                                stoppedPositions.UpdatePosition('Y', coordinateY.GetRow(), coordinateY.GetCol());
+                                stoppedPositions.UpdatePosition('Z', coordinateZ.GetRow(), coordinateZ.GetCol());
+
+                                bufferB.UpdateTrack(stoppedPositions, 'Y', 'X');
+                            }
+                        }
                     }
                 }
             }
@@ -236,6 +309,7 @@ namespace RTS_PROJECT
             {
                 lock(lockD)
                 {
+                    //Written by Bert
                     Dictionary<char, Coordinate> positions = bufferD.GetPositions();
                     Coordinate coordX = positions['X'];
                     Coordinate coordY = positions['Y'];
@@ -258,39 +332,78 @@ namespace RTS_PROJECT
                         Console.WriteLine("There was no collision at time " + (TIME + 1));
                     }
 
-                    Coordinate futureX = positions['X'];
-                    int fxRow = IncrementRow(futureX.GetRow());
-                    int fxCol = IncrementCol(futureX.GetCol());
-
-                    Coordinate futureY = positions['Y'];
-                    int fyRow = IncrementRow(futureY.GetRow());
-                    int fyCol = futureY.GetCol();
-
-                    Coordinate futureZ = positions['Z'];
-                    int fzRow = futureZ.GetRow();
-                    int fzCol = IncrementCol(futureZ.GetCol());
-
-                    if (fxRow == fyRow && fxCol == fyCol)
+                    //Written by Zach
+                    lock(lockA)
                     {
-                        whoToStop['Y'] = true;
-                    }
-                    if (fxRow == fzRow && fxCol == fzCol)
-                    {
-                        whoToStop['Z'] = true;
-                    }
-                    if (fyRow == fzRow && fyCol == fzCol)
-                    {
-                        whoToStop['Y'] = true;
+                        //Get the positions of the train at TIME + 1
+                        Dictionary<char, Plain> plains = bufferA.ReadTrack();
+                        Coordinate coordinateX = plains['X'].FindTrain('X');
+                        Coordinate coordinateY = plains['Y'].FindTrain('Y');
+                        Coordinate coordinateZ = plains['Z'].FindTrain('Z');
+
+                        if (coordinateX.Equals(coordinateY))
+                        {
+                            Console.WriteLine("Prevented a collsion between X and Y at " + coordinateX + " at time " + (TIME + 1));
+                            lock (lockB)
+                            {
+                                Dictionary<char, Plain> stoppedPlains = bufferB.ReadTrack();
+                                Coordinate stoppedCoordinateX = stoppedPlains['X'].FindTrain('X');
+                                Coordinate stoppedCoordinateY = stoppedPlains['Y'].FindTrain('Y');
+                                Coordinate stoppedCoordinateZ = stoppedPlains['Z'].FindTrain('Z');
+                                Positions stoppedPositions = new Positions();
+                                stoppedPositions.UpdatePosition('X', coordinateX.GetRow(), coordinateX.GetCol());
+                                stoppedPositions.UpdatePosition('Y', coordinateY.GetRow(), coordinateY.GetCol());
+                                stoppedPositions.UpdatePosition('Z', coordinateZ.GetRow(), coordinateZ.GetCol());
+
+                                bufferA.UpdateTrack(stoppedPositions, 'Y');
+                            }
+                        }
+                        if (coordinateX.Equals(coordinateZ))
+                        {
+                            Console.WriteLine("Prevented a collsion between X and Z at " + coordinateX + " at time " + (TIME + 1));
+                            lock (lockB)
+                            {
+                                Dictionary<char, Plain> stoppedPlains = bufferB.ReadTrack();
+                                Coordinate stoppedCoordinateX = stoppedPlains['X'].FindTrain('X');
+                                Coordinate stoppedCoordinateY = stoppedPlains['Y'].FindTrain('Y');
+                                Coordinate stoppedCoordinateZ = stoppedPlains['Z'].FindTrain('Z');
+                                Positions stoppedPositions = new Positions();
+                                stoppedPositions.UpdatePosition('X', coordinateX.GetRow(), coordinateX.GetCol());
+                                stoppedPositions.UpdatePosition('Y', coordinateY.GetRow(), coordinateY.GetCol());
+                                stoppedPositions.UpdatePosition('Z', coordinateZ.GetRow(), coordinateZ.GetCol());
+
+                                bufferA.UpdateTrack(stoppedPositions, 'Z');
+                            }
+                        }
+                        if (coordinateY.Equals(coordinateZ))
+                        {
+                            Console.WriteLine("Prevented a collsion between Y and Z at " + coordinateZ + " at time " + (TIME + 1));
+                            lock (lockB)
+                            {
+                                Dictionary<char, Plain> stoppedPlains = bufferB.ReadTrack();
+                                Coordinate stoppedCoordinateX = stoppedPlains['X'].FindTrain('X');
+                                Coordinate stoppedCoordinateY = stoppedPlains['Y'].FindTrain('Y');
+                                Coordinate stoppedCoordinateZ = stoppedPlains['Z'].FindTrain('Z');
+                                Positions stoppedPositions = new Positions();
+                                stoppedPositions.UpdatePosition('X', coordinateX.GetRow(), coordinateX.GetCol());
+                                stoppedPositions.UpdatePosition('Y', coordinateY.GetRow(), coordinateY.GetCol());
+                                stoppedPositions.UpdatePosition('Z', coordinateZ.GetRow(), coordinateZ.GetCol());
+
+                                bufferA.UpdateTrack(stoppedPositions, 'Y');
+                            }
+                        }
                     }
                 }
-
             }
-
-            p2Ran = false;
+            lock(threadsRan)
+            {
+                threadsRan[3] = true;
+            }
         }
     }
 
     //Helper class that holds the row/column position of each train
+    //Written by Zach
     public class Coordinate
     {
         private int mRow;
@@ -300,6 +413,26 @@ namespace RTS_PROJECT
         {
             mRow = 0;
             mCol = 0;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if ((obj == null) || !this.GetType().Equals(obj.GetType()))
+            {
+                return false;
+            }
+            Coordinate coordinate = (Coordinate)obj;
+            return (mRow == coordinate.GetRow()) && (mCol == coordinate.GetCol());
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+
+        public override string ToString()
+        {
+            return "(" + mRow + ", " + mCol + ")";
         }
 
         public void UpdateCoordinate(int row, int col)
@@ -318,6 +451,7 @@ namespace RTS_PROJECT
         }
     }
 
+    //Written by Zach
     public class Positions
     {
         private ReaderWriterLockSlim mLock = new ReaderWriterLockSlim();
@@ -345,6 +479,7 @@ namespace RTS_PROJECT
                 mLock.ExitWriteLock();
             }
         }
+
         public Dictionary<char, Coordinate> GetPositions()
         {
             mLock.EnterReadLock();
