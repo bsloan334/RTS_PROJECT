@@ -72,6 +72,41 @@ namespace RTS_PROJECT
             Console.ReadLine();
         }
 
+        static public bool WillTrainStop(char train)
+        {
+            //x - 10%
+            //y - 5%
+            //z - 1%
+            Random trainStopper = new Random();
+            int value = trainStopper.Next(1, 101);
+            switch (train)
+            {
+                case 'X':
+                    if (value >= 1 && value <= 10)
+                    {
+                        return false;
+                    }
+                    break;
+                case 'Y':
+                    if (value >= 1 && value <= 5)
+                    {
+                        return false;
+                    }
+                    break;
+                case 'Z':
+                    if (value == 1)
+                    {
+                        return false;
+                    }
+                    break;
+                default:
+                    Console.Error.WriteLine("Not a valid train character!");
+                    break;
+            }
+            return true;
+        }
+
+
         //Written by Bert
         static public int IncrementRow(int row)
         {
@@ -253,7 +288,6 @@ namespace RTS_PROJECT
 
                         if (coordinateX.Equals(coordinateY))
                         {
-                            Console.WriteLine("Prevented a collsion between X and Y at " + coordinateX + " at time " + (TIME + 1));
                             lock (lockA)
                             {
                                 Dictionary<char, Plain> stoppedPlains = bufferA.ReadTrack();
@@ -265,12 +299,25 @@ namespace RTS_PROJECT
                                 stoppedPositions.UpdatePosition('Y', coordinateY.GetRow(), coordinateY.GetCol());
                                 stoppedPositions.UpdatePosition('Z', coordinateZ.GetRow(), coordinateZ.GetCol());
 
-                                bufferB.UpdateTrack(stoppedPositions, 'Y');
+                                //calculate if train will stop, if it doesn't stop, update
+                                if(WillTrainStop('Y'))
+                                {
+                                    bufferB.UpdateTrack(stoppedPositions, 'Y');
+                                    Console.WriteLine("Prevented a collsion between X and Y at " + coordinateX + " at time " + (TIME + 1) + "by stopping Y");
+                                }
+                                else if (WillTrainStop('X'))
+                                {
+                                    bufferB.UpdateTrack(stoppedPositions, 'X');
+                                    Console.WriteLine("Prevented a collsion between X and Y at " + coordinateX + " at time " + (TIME + 1) + "by stopping X");
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Unavoidable collision between X and Y at " + coordinateX + " at time" + (TIME + 1));
+                                }
                             }
                         }
                         if (coordinateX.Equals(coordinateZ))
                         {
-                            Console.WriteLine("Prevented a collsion between X and Z at " + coordinateX + " at time " + (TIME + 1));
                             lock (lockA)
                             {
                                 Dictionary<char, Plain> stoppedPlains = bufferA.ReadTrack();
@@ -282,12 +329,25 @@ namespace RTS_PROJECT
                                 stoppedPositions.UpdatePosition('Y', coordinateY.GetRow(), coordinateY.GetCol());
                                 stoppedPositions.UpdatePosition('Z', coordinateZ.GetRow(), coordinateZ.GetCol());
 
-                                bufferB.UpdateTrack(stoppedPositions, 'Z');
+                                //calculate if train will stop, if it doesn't stop, update
+                                if (WillTrainStop('Z'))
+                                {
+                                    bufferB.UpdateTrack(stoppedPositions, 'Z');
+                                    Console.WriteLine("Prevented a collsion between X and Z at " + coordinateX + " at time " + (TIME + 1) + "by stopping Z");
+                                }
+                                else if (WillTrainStop('X'))
+                                {
+                                    bufferB.UpdateTrack(stoppedPositions, 'X');
+                                    Console.WriteLine("Prevented a collsion between X and Z at " + coordinateX + " at time " + (TIME + 1) + "by stopping X");
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Unavoidable collision between X and Z at " + coordinateX + " at time" + (TIME + 1));
+                                }
                             }
                         }
                         if (coordinateY.Equals(coordinateZ))
                         {
-                            Console.WriteLine("Prevented a collsion between Y and Z at " + coordinateZ + " at time " + (TIME + 1));
                             lock (lockA)
                             {
                                 Dictionary<char, Plain> stoppedPlains = bufferA.ReadTrack();
@@ -299,7 +359,21 @@ namespace RTS_PROJECT
                                 stoppedPositions.UpdatePosition('Y', coordinateY.GetRow(), coordinateY.GetCol());
                                 stoppedPositions.UpdatePosition('Z', coordinateZ.GetRow(), coordinateZ.GetCol());
 
-                                bufferB.UpdateTrack(stoppedPositions, 'Y', 'X');
+                                //calculate if train will stop, if it doesn't stop, update
+                                if (WillTrainStop('Y'))
+                                {
+                                    bufferB.UpdateTrack(stoppedPositions, 'Y');
+                                    Console.WriteLine("Prevented a collsion between Y and Z at " + coordinateX + " at time " + (TIME + 1) + "by stopping Y");
+                                }
+                                else if (WillTrainStop('X'))
+                                {
+                                    bufferB.UpdateTrack(stoppedPositions, 'X');
+                                    Console.WriteLine("Prevented a collsion between Y and Z at " + coordinateX + " at time " + (TIME + 1) + "by stopping X");
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Unavoidable collision between Y and Z at " + coordinateX + " at time" + (TIME + 1));
+                                }
                             }
                         }
                     }
@@ -343,10 +417,9 @@ namespace RTS_PROJECT
 
                         if (coordinateX.Equals(coordinateY))
                         {
-                            Console.WriteLine("Prevented a collsion between X and Y at " + coordinateX + " at time " + (TIME + 1));
                             lock (lockB)
                             {
-                                Dictionary<char, Plain> stoppedPlains = bufferB.ReadTrack();
+                                Dictionary<char, Plain> stoppedPlains = bufferA.ReadTrack();
                                 Coordinate stoppedCoordinateX = stoppedPlains['X'].FindTrain('X');
                                 Coordinate stoppedCoordinateY = stoppedPlains['Y'].FindTrain('Y');
                                 Coordinate stoppedCoordinateZ = stoppedPlains['Z'].FindTrain('Z');
@@ -355,15 +428,28 @@ namespace RTS_PROJECT
                                 stoppedPositions.UpdatePosition('Y', coordinateY.GetRow(), coordinateY.GetCol());
                                 stoppedPositions.UpdatePosition('Z', coordinateZ.GetRow(), coordinateZ.GetCol());
 
-                                bufferA.UpdateTrack(stoppedPositions, 'Y');
+                                //calculate if train will stop, if it doesn't stop, update
+                                if (WillTrainStop('Y'))
+                                {
+                                    bufferA.UpdateTrack(stoppedPositions, 'Y');
+                                    Console.WriteLine("Prevented a collsion between X and Y at " + coordinateX + " at time " + (TIME + 1) + "by stopping Y");
+                                }
+                                else if (WillTrainStop('X'))
+                                {
+                                    bufferA.UpdateTrack(stoppedPositions, 'X');
+                                    Console.WriteLine("Prevented a collsion between X and Y at " + coordinateX + " at time " + (TIME + 1) + "by stopping X");
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Unavoidable collision between X and Y at " + coordinateX + " at time" + (TIME + 1));
+                                }
                             }
                         }
                         if (coordinateX.Equals(coordinateZ))
                         {
-                            Console.WriteLine("Prevented a collsion between X and Z at " + coordinateX + " at time " + (TIME + 1));
                             lock (lockB)
                             {
-                                Dictionary<char, Plain> stoppedPlains = bufferB.ReadTrack();
+                                Dictionary<char, Plain> stoppedPlains = bufferA.ReadTrack();
                                 Coordinate stoppedCoordinateX = stoppedPlains['X'].FindTrain('X');
                                 Coordinate stoppedCoordinateY = stoppedPlains['Y'].FindTrain('Y');
                                 Coordinate stoppedCoordinateZ = stoppedPlains['Z'].FindTrain('Z');
@@ -372,15 +458,28 @@ namespace RTS_PROJECT
                                 stoppedPositions.UpdatePosition('Y', coordinateY.GetRow(), coordinateY.GetCol());
                                 stoppedPositions.UpdatePosition('Z', coordinateZ.GetRow(), coordinateZ.GetCol());
 
-                                bufferA.UpdateTrack(stoppedPositions, 'Z');
+                                //calculate if train will stop, if it doesn't stop, update
+                                if (WillTrainStop('Z'))
+                                {
+                                    bufferA.UpdateTrack(stoppedPositions, 'Z');
+                                    Console.WriteLine("Prevented a collsion between X and Z at " + coordinateX + " at time " + (TIME + 1) + "by stopping Z");
+                                }
+                                else if (WillTrainStop('X'))
+                                {
+                                    bufferA.UpdateTrack(stoppedPositions, 'X');
+                                    Console.WriteLine("Prevented a collsion between X and Z at " + coordinateX + " at time " + (TIME + 1) + "by stopping X");
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Unavoidable collision between X and Z at " + coordinateX + " at time" + (TIME + 1));
+                                }
                             }
                         }
                         if (coordinateY.Equals(coordinateZ))
                         {
-                            Console.WriteLine("Prevented a collsion between Y and Z at " + coordinateZ + " at time " + (TIME + 1));
                             lock (lockB)
                             {
-                                Dictionary<char, Plain> stoppedPlains = bufferB.ReadTrack();
+                                Dictionary<char, Plain> stoppedPlains = bufferA.ReadTrack();
                                 Coordinate stoppedCoordinateX = stoppedPlains['X'].FindTrain('X');
                                 Coordinate stoppedCoordinateY = stoppedPlains['Y'].FindTrain('Y');
                                 Coordinate stoppedCoordinateZ = stoppedPlains['Z'].FindTrain('Z');
@@ -389,7 +488,21 @@ namespace RTS_PROJECT
                                 stoppedPositions.UpdatePosition('Y', coordinateY.GetRow(), coordinateY.GetCol());
                                 stoppedPositions.UpdatePosition('Z', coordinateZ.GetRow(), coordinateZ.GetCol());
 
-                                bufferA.UpdateTrack(stoppedPositions, 'Y');
+                                //calculate if train will stop, if it doesn't stop, update
+                                if (WillTrainStop('Y'))
+                                {
+                                    bufferA.UpdateTrack(stoppedPositions, 'Y');
+                                    Console.WriteLine("Prevented a collsion between Y and Z at " + coordinateX + " at time " + (TIME + 1) + "by stopping Y");
+                                }
+                                else if (WillTrainStop('X'))
+                                {
+                                    bufferA.UpdateTrack(stoppedPositions, 'X');
+                                    Console.WriteLine("Prevented a collsion between Y and Z at " + coordinateX + " at time " + (TIME + 1) + "by stopping X");
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Unavoidable collision between Y and Z at " + coordinateX + " at time" + (TIME + 1));
+                                }
                             }
                         }
                     }
