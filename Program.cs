@@ -189,7 +189,7 @@ namespace RTS_PROJECT
             }
         }
 
-        //Written by Bert
+        //Written by Bert and Zach
         static void P2(object state)
         {
             if (TIME % 2 == 0)
@@ -256,7 +256,7 @@ namespace RTS_PROJECT
                 {
                     Console.WriteLine("There was no collision at time " + (TIME + 1));
 
-                    //Written by Zach
+                    //Written by Zach and Bert
                     lock(lockB)
                     {
                         //Get the positions of the train at TIME + 1
@@ -363,7 +363,7 @@ namespace RTS_PROJECT
                 lock(lockD)
                 {
                     Console.WriteLine("There was no collision at time " + (TIME + 1));
-                    //Written by Zach
+                    //Written by Zach and Bert
                     lock(lockA)
                     {
                         //Get the positions of the train at TIME + 1
